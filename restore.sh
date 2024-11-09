@@ -43,9 +43,8 @@ gpg --import $HOME/tmp_restore/tmp/secret.gpg
 gpg --import $HOME/tmp_restore/tmp/secret_sub.gpg
 gpg --import $HOME/tmp_restore/tmp/trust.gpg
 sudo pacman-key --refresh-keys
-echo "Please update trust for private key:"
 gpg --list-key
-read -p "- Please enter key ID" GPG_KEY_ID
+read -p "- Please enter key ID to update trust: " GPG_KEY_ID
 gpg --edit-key $GPG_KEY_ID
 
 # Update system and install required packages
