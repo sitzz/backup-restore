@@ -56,7 +56,7 @@ sudo pacman --noconfirm -S aws-cli aws-vault base-devel fakeroot docker docker-c
 mkdir -p $HOME/.ICAClient/cache
 # Why down here? Because some trusted keys are imported above
 echo "Installing from aur..."
-yay -S --sudoloop --noconfirm 1password icaclient pycharm-community-jre slack-desktop sublime-text-4 webstorm webstorm-jre
+yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient pycharm-community-jre slack-desktop sublime-text-4 webstorm webstorm-jre
 
 # Add user to docker group
 echo "Adding $USER to group 'docker'..."
