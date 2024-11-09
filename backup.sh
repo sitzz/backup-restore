@@ -3,27 +3,37 @@
 # are we sure about this?
 # set -e
 
-# Check if zip is installed
-which zip > /dev/null 2>&1
-if [ $? -gt 0 ];then
-    echo "ERROR: zip doesn't seem to be installed on system"
-    exit 1
-fi
-
-# Create a folder for the backup
-cd $HOME
+# Set runtime vars
 DESTINATION="${HOME}/backup_`date +"%Y-%m-%dT%H:%M:%S"`.zip"
-echo "Will backup to file ${DESTINATION}"
+ITEMS=""
+ZIPAPPEND=""
+ZIPARGS=""
+ZIPCMD=""
 
-# Backup of configs and other dot files
-echo "### Configs and dot-files ###"
+cd $HOME
+echo "Will backup to file ${HOME}/${DESTINATION}"
+
+# Backup of configs and dot files
+echo "### Configs, dot-files, and misc. files ###"
 
 FILES=".bash_aliases .gitconfig .gitconfig-github .gitconfig-gitlab .terraformrc backup.sh TDCRootCA.crt"
 for file in $FILES
 do
     if [ -n "$(ls -A ${HOME}/${file})" ];then
-        echo "... Backing up $file"
-        zip -qr5uj $DESTINATION $HOME/$file
+        echo "... Adding $file"
+        ITEMS="${ITEMS} ${file}"
+    fi
+done
+
+# Backup common folder
+echo "### Folders ###"
+
+FOLDERS=".aws .ssh .vpn code Desktop Documents Downloads Music Pictures Terraform"
+for folder in $FOLDERS
+do
+    if [ -n "$(ls -A ${HOME}/${folder})" ]; then
+        echo "... Adding $folder"
+        ITEMS="${ITEMS} ${folder}"
     fi
 done
 
@@ -34,41 +44,60 @@ read -p "- Please enter GnuPGP key passphrase: " -s GPG_PASSPHRASE
 echo ""
 echo "... Backing up GPG keys"
 gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export --armor --output /tmp/public.asc
-zip -qr5uj $DESTINATION /tmp/public.asc
-rm /tmp/public.asc
+ITEMS="${ITEMS} /tmp/public.asc"
 gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-keys --output /tmp/secret.gpg
-zip -qr5uj $DESTINATION /tmp/secret.gpg
-rm /tmp/secret.gpg
+ITEMS="${ITEMS} /tmp/secret.gpg"
 gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-subkeys --output /tmp/secret_sub.gpg
-zip -qr5uj $DESTINATION /tmp/secret_sub.gpg
-rm /tmp/secret_sub.gpg
+ITEMS="${ITEMS} /tmp/secret_sub.gpg"
 gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-ownertrust > /tmp/trust.gpg
-zip -qr5uj $DESTINATION /tmp/trust.gpg
-rm /tmp/trust.gpg
-unset GPG_PASSPHRASE
+ITEMS="${ITEMS} /tmp/trust.gpg"
 
-# Backup common folder
-echo "### Common folders ###"
+# Add files to zip archive
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ! Currently disabling 7z as it's a bit buggy, need to polish the implementation !
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# # Check for 7z (prefered)
+# which 7z > /dev/null 2>&1
+# if [ $? -eq 0 ];then
+#     echo "Found 7z"
+#     ZIPCMD=`which 7z`
+#     ZIPARGS="a -mx5 -y -r"
+#     ZIPAPPEND="-x!*/.terraform -x!*/.venv -x!*/node_modules"
+# fi
 
-FOLDERS=".aws .ssh .vpn Documents Downloads Music Pictures Terraform"
-for folder in $FOLDERS
-do
-    if [ -n "$(ls -A ${HOME}/${folder})" ]; then
-        echo "... Backing up $folder"
-        zip -qr5u $DESTINATION $folder
+# Fallback to zip
+if [ -z "$ZIPCMD" ] ;then
+    which zip > /dev/null 2>&1
+    if [ $? -eq 0 ];then
+        echo "Found zip"
+        ZIPCMD=`which zip`
+        ZIPARGS="-qr5"
+        ZIPAPPEND="-x */.terraform */.venv */node_modules"
     fi
-done
+fi
 
-# Backup code directory
-echo "### Code folder ###"
+if [ -z "$ZIPCMD" ]; then
+    echo "ERROR: no archiving application found, currently supports '7z' and 'zip'"
+    exit 1
+fi
 
-# We need to remove any terraform directories, python virtual invironments, node modules etc. - they take up too much space!
-echo "... Removing .terraform, .venv, and node_modules folders in code folder"
-find ./code -type d -name ".terraform" -exec /bin/rm -r {} \;
-find ./code -type d -name ".venv" -exec /bin/rm -r {} \;
-find ./code -type d -name "node_modules" -exec /bin/rm -r {} \;
-echo "... Backing up code folder"
-zip -qr5u $DESTINATION ./code
+echo "### Creating zip archive ###"
+$ZIPCMD $ZIPARGS $DESTINATION $ITEMS $ZIPAPPEND
+
+# Clean up
+echo "### Cleaning up ###"
+rm /tmp/public.asc
+rm /tmp/secret.gpg
+rm /tmp/secret_sub.gpg
+rm /tmp/trust.gpg
+unset DESTINATION
+unset FOLDERS
+unset FILES
+unset GPG_PASSPHRASE
+unset ITEMS
+unset ZIPAPPEND
+unset ZIPARGS
+unset ZIPCMD
 
 # We're done
 echo "Done..."
