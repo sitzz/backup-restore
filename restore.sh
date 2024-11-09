@@ -56,9 +56,10 @@ rm -rf $HOME/tmp_restore
 unset BACKUP_FILE
 
 # Install from aur
+mkdir -p $HOME/.ICAClient/cache
 # Why down here? Because some trusted keys are imported above
 echo "Installing from aur"
-yay -S --sudoloop --noconfirm 1password pycharm-community-jre slack-desktop sublime-text-4 webstorm webstorm-jre
+yay -S --sudoloop --noconfirm 1password icaclient pycharm-community-jre slack-desktop sublime-text-4 webstorm webstorm-jre
 
 # Last thing we do...
 read -p "- Reboot? [y/N]: " REBOOT
