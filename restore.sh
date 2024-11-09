@@ -1,14 +1,7 @@
+#!/bin/bash
+
 # Set runtime vars
 SOURCE="${HOME}/tmp_restore"
-
-# Update system and install required packages
-echo "Updating system and installing packages..."
-sudo pacman --noconfirm -Syyu
-sudo pacman --noconfirm -S base-devel fakeroot docker docker-compose unzip vim yay zip
-
-# Add user to docker group
-echo "Adding $USER to group 'docker'"
-sudo usermod -aG docker $USER
 
 # Restore from backup file
 read -p "- Please enter backup file name: " BACKUP_FILE
@@ -49,17 +42,51 @@ gpg --import $HOME/tmp_restore/tmp/public.asc
 gpg --import $HOME/tmp_restore/tmp/secret.gpg
 gpg --import $HOME/tmp_restore/tmp/secret_sub.gpg
 gpg --import $HOME/tmp_restore/tmp/trust.gpg
+sudo pacman-key --refresh-keys
+echo "Please update trust for private key:"
+gpg --edit-key 47790A13C4732D9A7463230EB50DA255315DD0C3
+
+# Update system and install required packages
+echo "Updating system..."
+sudo pacman --noconfirm -Syyu
+echo "Installing from Arch packages..."
+sudo pacman --noconfirm -S aws-cli aws-vault base-devel fakeroot docker docker-compose k9s kubectl nodejs npm pipx unzip vim yay zip
+
+# Install from aur
+mkdir -p $HOME/.ICAClient/cache
+# Why down here? Because some trusted keys are imported above
+echo "Installing from aur..."
+yay -S --sudoloop --noconfirm 1password icaclient pycharm-community-jre slack-desktop sublime-text-4 webstorm webstorm-jre
+
+# Add user to docker group
+echo "Adding $USER to group 'docker'..."
+sudo usermod -aG docker $USER
+
+# Install NVM
+echo "Installing nvm..."
+git clone https://github.com/nvm-sh/nvm.git $HOME/.nvm
+$HOME/.nvm/install.sh
+
+# Add loading of .bash_aliases to .bashrc
+echo "Updating .bashrc"
+cat <<EOT >> $HOME/.bashrc
+
+if [ -f "${HOME}/.bash_aliases" ]; then
+	source $HOME/.bash_aliases
+fi
+EOT
+
+# Configure aws-vault
+# This is 100 % custom
+echo "Setting up aws-vault..."
+aws-vault add ent-root
+aws-vault exec ent-sysdev-dev -- aws eks update-kubeconfig --name dev-k8s --alias sysdevdev
+aws-vault exec ent-sysdev-prd -- aws eks update-kubeconfig --name prd-k8s --alias sysdevprd
 
 # Cleanup
 echo "Cleaning up..."
 rm -rf $HOME/tmp_restore
 unset BACKUP_FILE
-
-# Install from aur
-mkdir -p $HOME/.ICAClient/cache
-# Why down here? Because some trusted keys are imported above
-echo "Installing from aur"
-yay -S --sudoloop --noconfirm 1password icaclient pycharm-community-jre slack-desktop sublime-text-4 webstorm webstorm-jre
 
 # Last thing we do...
 read -p "- Reboot? [y/N]: " REBOOT
