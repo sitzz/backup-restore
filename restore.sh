@@ -7,8 +7,8 @@ SOURCE="${HOME}/tmp_restore"
 read -p "- Please enter backup file name: " BACKUP_FILE
 echo " ### Unzipping backup file $BACKUP_FILE ###"
 if [ ! -f "$BACKUP_FILE" ]; then
-	echo "ERROR: unable to locate file $BACKUP_FILE"
-	exit 1
+    echo "ERROR: unable to locate file $BACKUP_FILE"
+    exit 1
 fi
 mkdir $SOURCE
 unzip -d $SOURCE $BACKUP_FILE
@@ -42,7 +42,7 @@ gpg --import $HOME/tmp_restore/tmp/public.asc
 gpg --import $HOME/tmp_restore/tmp/secret.gpg
 gpg --import $HOME/tmp_restore/tmp/secret_sub.gpg
 gpg --import $HOME/tmp_restore/tmp/trust.gpg
-sudo pacman-key --refresh-keys
+sudo pacman-key --updatedb
 gpg --list-key
 read -p "- Please enter key ID to update trust: " GPG_KEY_ID
 gpg --edit-key $GPG_KEY_ID
@@ -75,6 +75,8 @@ cat <<EOT >> $HOME/.bashrc
 if [ -f "${HOME}/.bash_aliases" ]; then
 	source $HOME/.bash_aliases
 fi
+
+export EDITOR=/usr/bin/vim
 EOT
 
 # Configure aws-vault
@@ -92,5 +94,7 @@ unset BACKUP_FILE
 # Last thing we do...
 read -p "- Reboot? [y/N]: " REBOOT
 if [ $REBOOT == 'y' ]; then
-	reboot
+    echo ""
+    read -p "Save and close any open applications, then press any key..."
+    reboot
 fi
