@@ -86,6 +86,10 @@ aws-vault add ent-root
 aws-vault exec ent-sysdev-dev -- aws eks update-kubeconfig --name dev-k8s --alias sysdevdev
 aws-vault exec ent-sysdev-prd -- aws eks update-kubeconfig --name prd-k8s --alias sysdevprd
 
+# Disable Baloo
+echo "Disabling baloo..."
+balooctl6 disable
+
 # Cleanup
 echo "Cleaning up..."
 rm -rf $HOME/tmp_restore
