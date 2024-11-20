@@ -51,7 +51,7 @@ gpg --edit-key $GPG_KEY_ID
 echo "Updating system..."
 sudo pacman --noconfirm -Syyu
 echo "Installing from Arch packages..."
-sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-compose k9s kubectl mousepad nodejs npm pipx python-pytest python-ruff python-uv screen unzip vim yay zip
+sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose k9s kubectl mousepad nodejs npm pipx python-pytest python-ruff python-uv screen unzip vim yay zip
 
 # Install from aur
 mkdir -p $HOME/.ICAClient/cache
