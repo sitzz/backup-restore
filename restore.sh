@@ -49,7 +49,7 @@ gpg --edit-key $GPG_KEY_ID
 
 # Update system and install required packages
 echo "Updating system..."
-sudo pacman --noconfirm -Syyu
+sudo pacman --noconfirm -Syu
 echo "Installing from Arch packages..."
 sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose k9s kubectl mousepad nodejs npm pipx python-pytest python-ruff python-uv screen unzip vim yay zip
 
