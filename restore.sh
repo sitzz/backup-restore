@@ -51,13 +51,13 @@ gpg --edit-key $GPG_KEY_ID
 echo "Updating system..."
 sudo pacman --noconfirm -Syu
 echo "Installing from Arch packages..."
-sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose k9s kubectl mousepad nodejs npm obsidian pipx python-pytest python-ruff python-uv screen unzip vim yay zip
+sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose go k9s kubectl mousepad nodejs npm obsidian pipx python-pytest python-ruff python-uv screen unzip vim yay zip
 
 # Install from aur
 mkdir -p $HOME/.ICAClient/cache
 # Why down here? Because some trusted keys are imported above
 echo "Installing from aur..."
-yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient postman-bin pycharm-community-jre rider slack-desktop sublime-text-4 teams-for-linux webstorm webstorm-jre
+yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient postman-bin pycharm-community-jre slack-desktop sublime-text-4 teams-for-linux vscodium-bin webstorm webstorm-jre
 
 # Add user to docker group
 echo "Adding $USER to group 'docker'..."
