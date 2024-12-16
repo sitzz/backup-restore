@@ -11,7 +11,7 @@ ZIPARGS=""
 ZIPCMD=""
 
 cd $HOME
-echo "Will backup to file ${HOME}/${DESTINATION}"
+echo "Will backup to file ${DESTINATION}"
 
 # Backup of configs and dot files
 echo "### Configs, dot-files, and misc. files ###"
