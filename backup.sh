@@ -5,52 +5,55 @@
 
 # Set runtime vars
 DESTINATION="${HOME}/backup_`date +"%Y-%m-%dT%H:%M:%S"`.zip"
-ITEMS=""
+ITEMS="files.txt folders.txt"
+FILES=$(cat files.txt)
+FOLDERS=$(cat folders.txt)
 ZIPAPPEND=""
 ZIPARGS=""
 ZIPCMD=""
 
-cd $HOME
+# Prompts for gpg passphrase
+read -p "- Please enter GnuPGP key passphrase: " -s GPG_PASSPHRASE
+
+# Start the backup
 echo "Will backup to file ${DESTINATION}"
 
-# Backup of configs and dot files
-echo "### Configs, dot-files, and misc. files ###"
-
-FILES=".bash_aliases .gitconfig .gitconfig-github .gitconfig-gitlab .terraformrc backup.sh TDCRootCA.crt"
+# Backup of files
+echo "Taking backup of files..."
 for file in $FILES
 do
-    if [ -n "$(ls -A ${HOME}/${file})" ];then
+    if [[ -e "${HOME}/${file}" ]]; then
         echo "... Adding $file"
-        ITEMS="${ITEMS} ${file}"
+        ITEMS="${ITEMS} ${HOME}/${file}"
     fi
 done
 
 # Backup common folder
-echo "### Folders ###"
-
-FOLDERS=".aws .ssh .vpn code Desktop Documents Downloads Music Pictures Terraform"
+echo "Taking backup of folders..."
 for folder in $FOLDERS
 do
-    if [ -n "$(ls -A ${HOME}/${folder})" ]; then
+    if [[ -d "${HOME}/${folder}" ]]; then
         echo "... Adding $folder"
-        ITEMS="${ITEMS} ${folder}"
+        ITEMS="${ITEMS} ${HOME}/${folder}"
     fi
 done
 
 # Backup gpg keys
-echo "### GnuPG keys ###"
+echo "Taking backup of GnuPG keys..."
 
-read -p "- Please enter GnuPGP key passphrase: " -s GPG_PASSPHRASE
-echo ""
-echo "... Backing up GPG keys"
-gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export --armor --output /tmp/public.asc
-ITEMS="${ITEMS} /tmp/public.asc"
-gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-keys --output /tmp/secret.gpg
-ITEMS="${ITEMS} /tmp/secret.gpg"
-gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-subkeys --output /tmp/secret_sub.gpg
-ITEMS="${ITEMS} /tmp/secret_sub.gpg"
-gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-ownertrust > /tmp/trust.gpg
-ITEMS="${ITEMS} /tmp/trust.gpg"
+if [ -n "$GPG_PASSPHRASE" ]; then
+    echo "... Backing up GPG keys"
+    gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export --armor --output /tmp/public.asc
+    ITEMS="${ITEMS} /tmp/public.asc"
+    gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-keys --output /tmp/secret.gpg
+    ITEMS="${ITEMS} /tmp/secret.gpg"
+    gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-subkeys --output /tmp/secret_sub.gpg
+    ITEMS="${ITEMS} /tmp/secret_sub.gpg"
+    gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-ownertrust > /tmp/trust.gpg
+    ITEMS="${ITEMS} /tmp/trust.gpg"
+else
+    echo "!!! Skipping due to missing passphrase"
+fi
 
 # Add files to zip archive
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -69,7 +72,6 @@ ITEMS="${ITEMS} /tmp/trust.gpg"
 if [ -z "$ZIPCMD" ] ;then
     which zip > /dev/null 2>&1
     if [ $? -eq 0 ];then
-        echo "Found zip"
         ZIPCMD=`which zip`
         ZIPARGS="-qr5"
         ZIPAPPEND="-x */.terraform */.venv */node_modules"
@@ -81,15 +83,17 @@ if [ -z "$ZIPCMD" ]; then
     exit 1
 fi
 
-echo "### Creating zip archive ###"
+echo "Creating zip archive..."
 $ZIPCMD $ZIPARGS $DESTINATION $ITEMS $ZIPAPPEND
 
 # Clean up
-echo "### Cleaning up ###"
-rm /tmp/public.asc
-rm /tmp/secret.gpg
-rm /tmp/secret_sub.gpg
-rm /tmp/trust.gpg
+echo "Cleaning up..."
+if [ -n "$GPG_PASSPHRASE" ]; then
+    rm /tmp/public.asc
+    rm /tmp/secret.gpg
+    rm /tmp/secret_sub.gpg
+    rm /tmp/trust.gpg
+fi
 unset DESTINATION
 unset FOLDERS
 unset FILES

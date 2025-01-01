@@ -1,11 +1,16 @@
 #!/bin/bash
 
+# are we sure about this?
+# set -e
+
 # Set runtime vars
+FILES=$(cat files.txt)
+FOLDERS=$(cat folders.txt)
 SOURCE="${HOME}/tmp_restore"
 
 # Restore from backup file
 read -p "- Please enter backup file name: " BACKUP_FILE
-echo " ### Unzipping backup file $BACKUP_FILE ###"
+echo " Unzipping backup file $BACKUP_FILE"
 if [ ! -f "$BACKUP_FILE" ]; then
     echo "ERROR: unable to locate file $BACKUP_FILE"
     exit 1
@@ -13,24 +18,24 @@ fi
 mkdir $SOURCE
 unzip -d $SOURCE $BACKUP_FILE
 
-# Restore files
-echo "### Configs, dot-files, and misc. files ###"
+echo "Installing packages required by script..."
+sudo pacman --noconfirm -S unzip zip
 
-FILES=".bash_aliases .gitconfig .gitconfig-github .gitconfig-gitlab .terraformrc backup.sh TDCRootCA.crt"
+# Restore files
+echo "Restoring backup of files..."
 for file in $FILES
 do
-    if [ -n "$(ls -A ${SOURCE}/${file})" ];then
+    if [[ -e "${SOURCE}/${file}" ]]; then
         echo "... Moving $file"
         mv -f $SOURCE/$file $HOME
     fi
 done
 
 # Restore folders
-echo "### Folders ###"
-FOLDERS=".aws .ssh .vpn code Desktop Documents Downloads Music Pictures Terraform"
+echo "Restoring backup of folders..."
 for folder in $FOLDERS
 do
-    if [ -n "$(ls -A ${SOURCE}/${folder})" ]; then
+    if [[ -d "${SOURCE}/${folder}" ]]; then
         echo "... Moving $folder"
         mv -f $SOURCE/$folder $HOME
     fi
@@ -50,26 +55,26 @@ gpg --edit-key $GPG_KEY_ID
 # Update system and install required packages
 echo "Updating system..."
 sudo pacman --noconfirm -Syu
-echo "Installing from Arch packages..."
-sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose go k9s kubectl mousepad nodejs npm obsidian pipx python-pytest python-ruff python-uv screen unzip vim yay zip
+echo "Installing packages..."
+sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose go k9s kubectl mousepad nodejs npm obsidian pipx python-pytest python-ruff python-uv screen vim yay
 
 # Install from aur
+# Why down here? Because some trusted keys might be imported from a backup above
+echo "Installing from aur"
 mkdir -p $HOME/.ICAClient/cache
-# Why down here? Because some trusted keys are imported above
-echo "Installing from aur..."
 yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient postman-bin pycharm-community-jre slack-desktop sublime-text-4 teams-for-linux vscodium-bin webstorm webstorm-jre
-
-# Add user to docker group
-echo "Adding $USER to group 'docker'..."
-sudo usermod -aG docker $USER
 
 # Install NVM
 echo "Installing nvm..."
 git clone https://github.com/nvm-sh/nvm.git $HOME/.nvm
 $HOME/.nvm/install.sh
 
+# Add user to docker group
+echo "Adding $USER to group 'docker'..."
+sudo usermod -aG docker $USER
+
 # Add loading of .bash_aliases to .bashrc
-echo "Updating .bashrc"
+echo "Updating .bashrc..."
 cat <<EOT >> $HOME/.bashrc
 
 if [ -f "${HOME}/.bash_aliases" ]; then
@@ -77,6 +82,8 @@ if [ -f "${HOME}/.bash_aliases" ]; then
 fi
 
 export EDITOR=/usr/bin/vim
+
+export HISTCONTROL=ignoreboth:erasedups
 EOT
 
 # Configure aws-vault
@@ -94,6 +101,13 @@ balooctl6 disable
 echo "Cleaning up..."
 rm -rf $HOME/tmp_restore
 unset BACKUP_FILE
+unset FILES
+unset FOLDERS
+unset SOURCE
+
+# We're done
+echo "Done..."
+echo ""
 
 # Last thing we do...
 read -p "- Reboot? [y/N]: " REBOOT
