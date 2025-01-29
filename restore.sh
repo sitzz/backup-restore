@@ -81,9 +81,11 @@ if [ -f "${HOME}/.bash_aliases" ]; then
 	source $HOME/.bash_aliases
 fi
 
-export EDITOR=/usr/bin/vim
+EDITOR=/usr/bin/vim
 
-export HISTCONTROL=ignoreboth:erasedups
+HISTCONTROL=ignoreboth
+HISTSIZE=10000
+HISTFILESIZE=10000
 EOT
 
 # Configure aws-vault
