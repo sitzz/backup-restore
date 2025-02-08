@@ -1,13 +1,11 @@
 #!/bin/bash
 
-# are we sure about this?
-# set -e
+set -e
 
 # Set runtime vars
 DESTINATION="${HOME}/backup_`date +"%Y-%m-%dT%H:%M:%S"`.zip"
-ITEMS="files.txt folders.txt"
-FILES=$(cat files.txt)
-FOLDERS=$(cat folders.txt)
+ITEMS="include.txt"
+INCLUDE=$(cat include.txt)
 ZIPAPPEND=""
 ZIPARGS=""
 ZIPCMD=""
@@ -18,39 +16,30 @@ read -p "- Please enter GnuPGP key passphrase: " -s GPG_PASSPHRASE
 # Start the backup
 echo "Will backup to file ${DESTINATION}"
 
-# Backup of files
+# Add files and folders to $ITEMS
 echo "Taking backup of files..."
-for file in $FILES
+for path in $INCLUDE
 do
-    if [[ -e "${HOME}/${file}" ]]; then
-        echo "... Adding $file"
-        ITEMS="${ITEMS} ${HOME}/${file}"
+    if [[ -f "${HOME}/${path}" ]]; then
+        echo "... Adding file $path"
+        ITEMS="${ITEMS} ${HOME}/${path}"
     fi
-done
-
-# Backup common folder
-echo "Taking backup of folders..."
-for folder in $FOLDERS
-do
-    if [[ -d "${HOME}/${folder}" ]]; then
-        echo "... Adding $folder"
-        ITEMS="${ITEMS} ${HOME}/${folder}"
+    if [[ -d "${HOME}/${path}" ]]; then
+        echo "... Adding folder $path"
+        ITEMS="${ITEMS} ${HOME}/${path}"
     fi
 done
 
 # Backup gpg keys
-echo "Taking backup of GnuPG keys..."
+echo "Taking backup of gpg keys..."
 
 if [ -n "$GPG_PASSPHRASE" ]; then
-    echo "... Backing up GPG keys"
-    gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export --armor --output /tmp/public.asc
-    ITEMS="${ITEMS} /tmp/public.asc"
+    echo "... Backing up secrets keys"
     gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-keys --output /tmp/secret.gpg
     ITEMS="${ITEMS} /tmp/secret.gpg"
+    echo "... Backing up secrets subkeys"
     gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-secret-subkeys --output /tmp/secret_sub.gpg
     ITEMS="${ITEMS} /tmp/secret_sub.gpg"
-    gpg --batch --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE}" --export-options backup --export-ownertrust > /tmp/trust.gpg
-    ITEMS="${ITEMS} /tmp/trust.gpg"
 else
     echo "!!! Skipping due to missing passphrase"
 fi
@@ -84,15 +73,13 @@ if [ -z "$ZIPCMD" ]; then
 fi
 
 echo "Creating zip archive..."
-$ZIPCMD $ZIPARGS $DESTINATION $ITEMS $ZIPAPPEND
+#$ZIPCMD $ZIPARGS $DESTINATION $ITEMS $ZIPAPPEND
 
 # Clean up
 echo "Cleaning up..."
 if [ -n "$GPG_PASSPHRASE" ]; then
-    rm /tmp/public.asc
     rm /tmp/secret.gpg
     rm /tmp/secret_sub.gpg
-    rm /tmp/trust.gpg
 fi
 unset DESTINATION
 unset FOLDERS
