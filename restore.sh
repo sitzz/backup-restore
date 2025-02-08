@@ -1,52 +1,43 @@
 #!/bin/bash
 
-# are we sure about this?
-# set -e
+set -e
 
 # Set runtime vars
-FILES=$(cat files.txt)
-FOLDERS=$(cat folders.txt)
+INCLUDE=$(cat include.txt)
 SOURCE="${HOME}/tmp_restore"
 
 # Restore from backup file
 read -p "- Please enter backup file name: " BACKUP_FILE
-echo " Unzipping backup file $BACKUP_FILE"
 if [ ! -f "$BACKUP_FILE" ]; then
-    echo "ERROR: unable to locate file $BACKUP_FILE"
+    echo "ERROR: file not found $BACKUP_FILE"
     exit 1
 fi
 mkdir $SOURCE
-unzip -d $SOURCE $BACKUP_FILE
 
-echo "Installing packages required by script..."
+echo "Ensuring script dependencies..."
 sudo pacman --noconfirm -S unzip zip
 
-# Restore files
-echo "Restoring backup of files..."
-for file in $FILES
-do
-    if [[ -e "${SOURCE}/${file}" ]]; then
-        echo "... Moving $file"
-        mv -f $SOURCE/$file $HOME
-    fi
-done
+echo "Unzipping backup file $BACKUP_FILE"
+unzip -d $SOURCE $BACKUP_FILE
 
-# Restore folders
-echo "Restoring backup of folders..."
-for folder in $FOLDERS
+# Restore files and folders
+echo "Restoring backup of files and folders..."
+for path in $INCLUDE
 do
-    if [[ -d "${SOURCE}/${folder}" ]]; then
-        echo "... Moving $folder"
-        mv -f $SOURCE/$folder $HOME
+    if [[ -e "${SOURCE}/${path}" ]]; then
+        echo "... Restoring file $path"
+        mv -f $SOURCE/$path $HOME
+    fi
+    if [[ -d "${SOURCE}/${path}" ]]; then
+        echo "... Restoring folder $path"
+        mv -f $SOURCE/$path $HOME
     fi
 done
 
 # Import GnuPG keys
 echo "Importing gpg keys..."
-gpg --import $HOME/tmp_restore/tmp/public.asc
 gpg --import $HOME/tmp_restore/tmp/secret.gpg
 gpg --import $HOME/tmp_restore/tmp/secret_sub.gpg
-gpg --import $HOME/tmp_restore/tmp/trust.gpg
 sudo pacman-key --updatedb
 gpg --list-key
 read -p "- Please enter key ID to update trust: " GPG_KEY_ID
@@ -56,13 +47,13 @@ gpg --edit-key $GPG_KEY_ID
 echo "Updating system..."
 sudo pacman --noconfirm -Syu
 echo "Installing packages..."
-sudo pacman --noconfirm -S aws-cli aws-vault base-devel dbeaver fakeroot docker docker-buildx docker-compose go k9s kubectl mousepad nodejs npm obsidian pipx python-pytest python-ruff python-uv screen vim yay
+sudo pacman --noconfirm -S aws-cli aws-vault base-devel code dbeaver fakeroot docker docker-buildx docker-compose go k9s kubectl mousepad nodejs npm obsidian python-pipx python-pytest python-ruff python-uv screen vim yay
 
 # Install from aur
 # Why down here? Because some trusted keys might be imported from a backup above
 echo "Installing from aur"
 mkdir -p $HOME/.ICAClient/cache
-yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient postman-bin pycharm-community-jre slack-desktop sublime-text-4 teams-for-linux vscodium-bin webstorm webstorm-jre
+yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient postman-bin pycharm-community-jre slack-desktop sublime-text-4 teams-for-linux webstorm webstorm-jre
 
 # Install NVM
 echo "Installing nvm..."
@@ -81,19 +72,12 @@ if [ -f "${HOME}/.bash_aliases" ]; then
 	source $HOME/.bash_aliases
 fi
 
-EDITOR=/usr/bin/vim
+export EDITOR=/usr/bin/vim
 
 HISTCONTROL=ignoreboth
 HISTSIZE=10000
 HISTFILESIZE=10000
 EOT
-
-# Configure aws-vault
-# This is 100 % custom
-echo "Setting up aws-vault..."
-aws-vault add ent-root
-aws-vault exec ent-sysdev-dev -- aws eks update-kubeconfig --name dev-k8s --alias sysdevdev
-aws-vault exec ent-sysdev-prd -- aws eks update-kubeconfig --name prd-k8s --alias sysdevprd
 
 # Disable Baloo
 echo "Disabling baloo..."
@@ -113,7 +97,7 @@ echo ""
 
 # Last thing we do...
 read -p "- Reboot? [y/N]: " REBOOT
-if [ $REBOOT == 'y' ]; then
+if [ "${REBOOT,,}" = "y" ]; then
     echo ""
     read -p "Save and close any open applications, then press any key..."
     reboot
