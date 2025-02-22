@@ -1,0 +1,7 @@
+[Unit]
+Description=Checks for pacman updates.
+
+[Service]
+Type=oneshot
+ExecStart=/home/myname/.config/systemd/user/checkupdates.sh
+

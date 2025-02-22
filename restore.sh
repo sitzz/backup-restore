@@ -46,14 +46,28 @@ gpg --edit-key $GPG_KEY_ID
 # Update system and install required packages
 echo "Updating system..."
 sudo pacman --noconfirm -Syu
-echo "Installing packages..."
-sudo pacman --noconfirm -S aws-cli aws-vault base-devel code dbeaver fakeroot docker docker-buildx docker-compose go k9s kubectl mousepad nodejs npm obsidian python-pipx python-pytest python-ruff python-uv screen vim yay
+echo "Installing official packages..."
+sudo pacman --noconfirm -S base-devel code dbeaver fakeroot docker docker-buildx docker-compose go mousepad nodejs npm obsidian python-pipx python-pytest python-ruff python-uv screen vim yay
+read -p "- Install work applications (aws-cli, aws-vault, k9s, kubectl)? [y/N]: " OFFIWORKAPPS
+if [ "${OFFIWORKAPPS,,}" = "y" ]; then
+    sudo pacman --noconfirm -S aws-cli aws-vault k9s kubectl
+fi
 
-# Install from aur
-# Why down here? Because some trusted keys might be imported from a backup above
-echo "Installing from aur"
+# Remove unwanted packages
+echo "Removing unwanted official packages..."
+sudo pacman -R kate || true
+sudo pacman -R manjaro-application-utility || true
+sudo pacman -R pamac-tray-icon-plasma || true
+sudo pacman -R pamac-gtk3 || true
+
+# Install aur packages
+echo "Installing aur packages"
 mkdir -p $HOME/.ICAClient/cache
-yay -S --sudoloop --noconfirm 1password aws-session-manager-plugin icaclient postman-bin pycharm-community-jre slack-desktop sublime-text-4 teams-for-linux webstorm webstorm-jre
+yay -S --sudoloop --noconfirm 1password icaclient postman-bin pycharm-community-jre sublime-text-4 webstorm webstorm-jre
+read -p "- Install work applications from AUR (aws-session-manager-plugin, slack-desktop, teams-for-linux)? [y/N]: " AURWORKAPPS
+if [ "${AURWORKAPPS,,}" = "y" ]; then
+    yay -S --sudoloop --noconfirm aws-session-manager-plugin slack-desktop teams-for-linux
+fi
 
 # Install NVM
 echo "Installing nvm..."
@@ -63,6 +77,12 @@ $HOME/.nvm/install.sh
 # Add user to docker group
 echo "Adding $USER to group 'docker'..."
 sudo usermod -aG docker $USER
+
+# Add update checker
+# Inspired by: https://www.reddit.com/r/archlinux/comments/1ap45n8/comment/kqdzzk3/
+mkdir -p $HOME/.config/systemd/user
+cp ./services/* $HOME/.config/systemd/user/
+syystemctl --user enable --now checkupdates.timer
 
 # Add loading of .bash_aliases to .bashrc
 echo "Updating .bashrc..."
