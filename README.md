@@ -1,6 +1,6 @@
 # Backup+Restore
 
-Collection of scripts that I use for creating backup files and restoring from those files on my computers running Arch, EndeavourOS, or Manjaro.
+Collection of scripts that I use for creating backup files and restoring from those files on my computers running Manjaro.
 
 Scripts are likely a neverending project and are very much customized for my own needs, so - YMMV!
 
@@ -9,9 +9,9 @@ Please keep in mind that this script is very much aligned with my personal needs
 
 ### Backup
 1. Clone the repository.
-2. Copy files `files.example.txt` and `folders.example.txt` to `files.txt` and `folders.txt` respectively, update to your liking.
-    1. __Please note__; Any entry in either file will be assumed being relative paths from your home directory. Absolute paths are not supported!
-3. Run `./backup.sh` from you consoleand answer the prompts.
+2. Copy files `include.example.txt` to `include.txt`, update the file to your liking.
+    1. __Please note__; Any entry in this file will be assumed being a relative path from your home directory. Absolute paths are not supported!
+3. Run `./backup.sh` from you console and answer the prompts.
 4. Rejoice!
 
 ### Restore
@@ -20,3 +20,9 @@ Please keep in mind that this script is very much aligned with my personal needs
 3. Run `./restore.sh` from your console and answer the prompts.
 4. Rejoice!
 
+## Credits
+
+### checkupdates.sh
+[Work--reddit](https://www.reddit.com/user/Work--Reddit/) and [DatCodeMania](https://www.reddit.com/user/DatCodeMania/)
+
+The `checkupdates.sh` script and associated files are inspired/copied from [this Reddit comment thread](https://www.reddit.com/r/archlinux/comments/1ap45n8/comment/kq6evvq/).
