@@ -63,10 +63,10 @@ sudo pacman -R pamac-gtk3 || true
 # Install aur packages
 echo "Installing aur packages"
 mkdir -p $HOME/.ICAClient/cache
-yay -S --sudoloop --noconfirm 1password icaclient postman-bin pycharm-community-jre sublime-text-4 webstorm webstorm-jre
+yay -S --sudoloop --noconfirm 1password postman-bin pycharm-community-jre sublime-text-4 webstorm webstorm-jre
 read -p "- Install work applications from AUR (aws-session-manager-plugin, slack-desktop, teams-for-linux)? [y/N]: " AURWORKAPPS
 if [ "${AURWORKAPPS,,}" = "y" ]; then
-    yay -S --sudoloop --noconfirm aws-session-manager-plugin slack-desktop teams-for-linux
+    yay -S --sudoloop --noconfirm aws-session-manager-plugin icaclient slack-desktop teams-for-linux
 fi
 
 # Install NVM
