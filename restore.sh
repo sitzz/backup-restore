@@ -47,7 +47,7 @@ gpg --edit-key $GPG_KEY_ID
 echo "Updating system..."
 sudo pacman --noconfirm -Syu
 echo "Installing official packages..."
-sudo pacman --noconfirm -S base-devel code dbeaver fakeroot docker docker-buildx docker-compose go mousepad nodejs npm obsidian python-pipx python-pytest python-ruff python-uv screen vim yay
+sudo pacman --noconfirm -S base-devel code dbeaver fakeroot docker docker-buildx docker-compose go mousepad nodejs npm obsidian pacman-contrib python-pipx python-pytest python-ruff python-uv screen vim yay
 read -p "- Install work applications (aws-cli, aws-vault, k9s, kubectl)? [y/N]: " OFFIWORKAPPS
 if [ "${OFFIWORKAPPS,,}" = "y" ]; then
     sudo pacman --noconfirm -S aws-cli aws-vault k9s kubectl

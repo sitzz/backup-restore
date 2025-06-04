@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Checking official repository updates
-official_updates=$(pacman -Qu | wc -l)
+official_updates=$(checkupdates | wc -l)
 
 # Checking AUR updates using yay
 aur_updates=$(yay -Qua | wc -l)
