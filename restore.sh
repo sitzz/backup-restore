@@ -78,11 +78,14 @@ $HOME/.nvm/install.sh
 echo "Adding $USER to group 'docker'..."
 sudo usermod -aG docker $USER
 
-# Add update checker
-# Inspired by: https://www.reddit.com/r/archlinux/comments/1ap45n8/comment/kqdzzk3/
+# Add user services
+# Check updates script inspired by: https://www.reddit.com/r/archlinux/comments/1ap45n8/comment/kqdzzk3/
 mkdir -p $HOME/.config/systemd/user
 cp ./services/* $HOME/.config/systemd/user/
-syystemctl --user enable --now checkupdates.timer
+# replace "myname" with current username and enable services
+find $HOME/.config/systemd/user -type f -exec sed -i "s/myname/$USER/g" {} +
+systemctl --user enable --now checkupdates.timer
+systemctl --user enable --now cleanup_downloads.service
 
 # Add loading of .bash_aliases to .bashrc
 echo "Updating .bashrc..."
