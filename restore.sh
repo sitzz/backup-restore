@@ -48,9 +48,20 @@ echo "Updating system..."
 sudo pacman --noconfirm -Syu
 echo "Installing official packages..."
 sudo pacman --noconfirm -S base-devel code dbeaver fakeroot docker docker-buildx docker-compose go mousepad nodejs npm obsidian pacman-contrib python-pipx python-pytest python-ruff python-uv screen vim yay
+
 read -p "- Install work applications (aws-cli, aws-vault, k9s, kubectl)? [y/N]: " OFFIWORKAPPS
 if [ "${OFFIWORKAPPS,,}" = "y" ]; then
     sudo pacman --noconfirm -S aws-cli aws-vault k9s kubectl
+fi
+
+read -p "- Install dotnet dependencies? [y/N]: " DOTNETDEPS
+if [ "${DOTNETDEPS,,}" = "y" ]; then
+    sudo pacman --noconfirm -S aspnet-runtime aspnet-targeting-pack dotnet-runtime dotnet-sdk
+    cat <<EOT >> $HOME/.bashrc
+
+export DOTNETPATH="$HOME/.dotnet"
+[[ -d $DOTNETPATH/tools ]] && export PATH="$DOTNETPATH/tools:$PATH"
+EOT
 fi
 
 # Remove unwanted packages
